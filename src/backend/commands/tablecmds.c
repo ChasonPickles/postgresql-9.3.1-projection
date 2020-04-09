@@ -2816,6 +2816,7 @@ AlterTableGetLockLevel(List *cmds)
 
 					switch (con->contype)
 					{
+                        case CONSTR_PROJECTION:
 						case CONSTR_EXCLUSION:
 						case CONSTR_PRIMARY:
 						case CONSTR_UNIQUE:

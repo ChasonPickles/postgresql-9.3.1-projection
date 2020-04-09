@@ -567,7 +567,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 	PARSER PARTIAL PARTITION PASSING PASSWORD PLACING PLANS POSITION
 	PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
-	PRIOR PRIVILEGES PROCEDURAL PROCEDURE PROGRAM
+	PRIOR PRIVILEGES PROCEDURAL PROCEDURE PROGRAM PROJECTION
 
 	QUOTE
 
@@ -2815,6 +2815,15 @@ ColConstraintElem:
 					n->indexspace = $3;
 					$$ = (Node *)n;
 				}
+            | PROJECTION opt_definition OptConsTableSpace
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_PROJECTION;
+					n->location = @1;
+					n->keys = NULL;
+					n->options = $2;
+					$$ = (Node *)n;
+				}
 			| PRIMARY KEY opt_definition OptConsTableSpace
 				{
 					Constraint *n = makeNode(Constraint);
@@ -2991,6 +3000,35 @@ ConstraintElem:
 					n->indexspace = NULL;
 					processCASbits($3, @3, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
+								   NULL, yyscanner);
+					$$ = (Node *)n;
+				}
+			| PROJECTION '(' columnList ')' opt_definition OptConsTableSpace
+				ConstraintAttributeSpec
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_PROJECTION;
+					n->location = @1;
+					n->keys = $3;
+					n->options = $5;
+					n->indexname = NULL;
+					n->indexspace = $6;
+					processCASbits($7, @7, "PROJECTION",
+								   NULL, NULL, NULL,
+								   NULL, yyscanner);
+					$$ = (Node *)n;
+				}
+			| PROJECTION ExistingIndex ConstraintAttributeSpec
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_PROJECTION;
+					n->location = @1;
+					n->keys = NIL;
+					n->options = NIL;
+					n->indexname = $2;
+					n->indexspace = NULL;
+					processCASbits($3, @3, "PROJECTION",
+								   NULL, NULL, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
 				}
@@ -13063,6 +13101,7 @@ reserved_keyword:
 			| ORDER
 			| PLACING
 			| PRIMARY
+            | PROJECTION
 			| REFERENCES
 			| RETURNING
 			| SELECT

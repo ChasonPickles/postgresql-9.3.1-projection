@@ -543,7 +543,10 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 					constraint->keys = list_make1(makeString(column->colname));
 				cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
 				break;
-
+            case CONSTR_PROJECTION:
+				if (constraint->keys == NIL)
+					constraint->keys = list_make1(makeString(column->colname));
+                break;
 			case CONSTR_EXCLUSION:
 				/* grammar does not allow EXCLUDE as a column constraint */
 				elog(ERROR, "column exclusion constraints are not supported");
@@ -621,6 +624,8 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
 
 	switch (constraint->contype)
 	{
+        case CONSTR_PROJECTION:
+            break;
 		case CONSTR_PRIMARY:
 		case CONSTR_UNIQUE:
 		case CONSTR_EXCLUSION:

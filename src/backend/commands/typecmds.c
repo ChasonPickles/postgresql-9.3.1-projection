@@ -947,6 +947,11 @@ DefineDomain(CreateDomainStmt *stmt)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("primary key constraints not possible for domains")));
 				break;
+			case CONSTR_PROJECTION:
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("projection constraints not possible for domains")));
+				break;
 
 			case CONSTR_EXCLUSION:
 				ereport(ERROR,
@@ -2452,6 +2457,12 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("primary key constraints not possible for domains")));
+			break;
+
+		case CONSTR_PROJECTION:
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("projection constraints not possible for domains")));
 			break;
 
 		case CONSTR_EXCLUSION:

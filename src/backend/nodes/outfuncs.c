@@ -2697,6 +2697,12 @@ _outConstraint(StringInfo str, const Constraint *node)
 			appendStringInfo(str, "ATTR_IMMEDIATE");
 			break;
 
+		case CONSTR_PROJECTION: // CS448
+			appendStringInfo(str, "PROJECTION");
+			WRITE_NODE_FIELD(keys);
+			WRITE_NODE_FIELD(options);
+			break;
+
 		default:
 			appendStringInfo(str, "<unrecognized_constraint %d>",
 							 (int) node->contype);

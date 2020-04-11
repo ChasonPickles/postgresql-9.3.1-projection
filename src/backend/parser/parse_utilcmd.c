@@ -77,6 +77,7 @@ typedef struct
 	List	   *ckconstraints;	/* CHECK constraints */
 	List	   *fkconstraints;	/* FOREIGN KEY constraints */
 	List	   *ixconstraints;	/* index-creating constraints */
+	List	   *projconstraints;	/* CS448 projection constraints */
 	List	   *inh_indexes;	/* cloned indexes from INCLUDING INDEXES */
 	List	   *blist;			/* "before list" of things to do before
 								 * creating the table */
@@ -213,6 +214,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
 	cxt.ixconstraints = NIL;
+	cxt.projconstraints = NIL;
 	cxt.inh_indexes = NIL;
 	cxt.blist = NIL;
 	cxt.alist = NIL;
@@ -277,6 +279,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 */
 	stmt->tableElts = cxt.columns;
 	stmt->constraints = cxt.ckconstraints;
+	stmt->projconstraints = cxt.projconstraints; // CS448
 
 	result = lappend(cxt.blist, stmt);
 	result = list_concat(result, cxt.alist);
@@ -543,9 +546,10 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 					constraint->keys = list_make1(makeString(column->colname));
 				cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
 				break;
-            case CONSTR_PROJECTION:
+            case CONSTR_PROJECTION: //CS448
 				if (constraint->keys == NIL)
 					constraint->keys = list_make1(makeString(column->colname));
+                cxt->projconstraints = lappend(cxt->projconstraints, constraint);
                 break;
 			case CONSTR_EXCLUSION:
 				/* grammar does not allow EXCLUDE as a column constraint */
@@ -625,6 +629,7 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
 	switch (constraint->contype)
 	{
         case CONSTR_PROJECTION:
+            cxt->projconstraints = lappend(cxt->projconstraints, constraint);
             break;
 		case CONSTR_PRIMARY:
 		case CONSTR_UNIQUE:

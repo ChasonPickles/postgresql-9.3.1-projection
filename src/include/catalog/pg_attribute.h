@@ -77,11 +77,8 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 	 */
 	int16		attnum;
 
-	/*
-	 * attndims is the declared number of dimensions, if an array type,
-	 * otherwise zero.
-	 */
-	int32		attndims;
+	/* CS448 does the attribute have a projection */
+	bool		hasprojection;
 
 	/*
 	 * fastgetattr() uses attcacheoff to cache byte offsets of attributes in
@@ -142,11 +139,14 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 	/* Number of times inherited from direct parent relation(s) */
 	int32		attinhcount;
 
-	/* CS448 does the attribute have a projection */
-	bool		hasProjection;
-
 	/* attribute's collation */
 	Oid			attcollation;
+
+	/*
+	 * attndims is the declared number of dimensions, if an array type,
+	 * otherwise zero.
+	 */
+	int32		attndims;
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* NOTE: The following fields are not present in tuple descriptors. */
@@ -169,7 +169,7 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
  * can access fields beyond attcollation except in a real tuple!
  */
 #define ATTRIBUTE_FIXED_PART_SIZE \
-	(offsetof(FormData_pg_attribute,attcollation) + sizeof(Oid))
+	(offsetof(FormData_pg_attribute,attndims) + sizeof(Oid))
 
 /* ----------------
  *		Form_pg_attribute corresponds to a pointer to a tuple with
@@ -190,7 +190,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 #define Anum_pg_attribute_attstattarget 4
 #define Anum_pg_attribute_attlen		5
 #define Anum_pg_attribute_attnum		6
-#define Anum_pg_attribute_attndims		7
+#define Anum_pg_attribute_attndims		19
 #define Anum_pg_attribute_attcacheoff	8
 #define Anum_pg_attribute_atttypmod		9
 #define Anum_pg_attribute_attbyval		10
@@ -201,8 +201,8 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 #define Anum_pg_attribute_attisdropped	15
 #define Anum_pg_attribute_attislocal	16
 #define Anum_pg_attribute_attinhcount	17
-#define Anum_pg_attribute_projection	18
-#define Anum_pg_attribute_attcollation	19
+#define Anum_pg_attribute_attcollation	18
+#define Anum_pg_attribute_hasprojection	7
 #define Anum_pg_attribute_attacl		20
 #define Anum_pg_attribute_attoptions	21
 #define Anum_pg_attribute_attfdwoptions 22

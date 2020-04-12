@@ -618,7 +618,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 
    /* CS448 */
    for(i = 0; i < descriptor->natts; i++ ){
-        descriptor->attrs[i]->hasProjection = false;
+        descriptor->attrs[i]->hasprojection = false;
    }
 
     if(stmt->projconstraints != NULL){
@@ -636,7 +636,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
                for(i = 0; i < descriptor->natts;i++ ){
                     name = descriptor->attrs[i]->attname.data;
                     if(strcmp(name, strVal(value)) == 0){
-                        descriptor->attrs[i]->hasProjection = true;
+                        descriptor->attrs[i]->hasprojection = true;
                     } 
                }
                 

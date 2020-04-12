@@ -290,7 +290,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
             rel = relation_open(relOid, AccessShareLock);
             pg_attr = rel->rd_att->attrs[attnum-1];
 
-            if(pg_attr->hasProjection){
+            if(pg_attr->hasprojection){
 
                 namespaceId = RelationGetNamespace(rel);
 

@@ -933,30 +933,10 @@ ProcessUtilitySlow(Node *parsetree,
 						Node	   *stmt = (Node *) lfirst(l);
                         Relation rel;
 
-                        /* CS448 
-                            bool hasProjection;
-                            char* projectionName;
-                            ListCell* lc;
-                            Constraint * constraint;
-                        */
-
 						if (IsA(stmt, CreateStmt))
 						{
 							Datum		toast_options;
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
-
-
-                            /* CS448        
-                            foreach(lc, ((CreateStmt*) stmt)->projconstraints){
-                                constraint = lfirst(lc);
-                                if (constraint->contype == CONSTR_PROJECTION){
-                                    hasProjection = true;
-                                    projectionName = queryString;
-                                }
-                            }
-                            */
-
-                            //((Value*) ((Constraint*) ((CreateStmt*) stmt)->projconstraints->head->data->ptr_value)->keys->head->data->ptr_value)
 
 
 							/* Create the table itself */
@@ -964,15 +944,6 @@ ProcessUtilitySlow(Node *parsetree,
 													RELKIND_RELATION,
 													InvalidOid);
 
-                            /* CS448
-                            if(hasProjection){
-                                rel = relation_open(relOid, AccessExclusiveLock);
-                                rel->hasProjections = true;
-                                rel->projections = list_make1(projectionName);
-                                //rel->rd_rel->hasProjection = true;
-                                relation_close(rel, AccessExclusiveLock);
-                            }
-                            */
 
 							/*
 							 * Let AlterTableCreateToastTable decide if this

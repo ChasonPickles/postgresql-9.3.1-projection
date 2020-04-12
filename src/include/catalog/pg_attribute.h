@@ -142,6 +142,9 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 	/* Number of times inherited from direct parent relation(s) */
 	int32		attinhcount;
 
+	/* CS448 does the attribute have a projection */
+	bool		hasProjection;
+
 	/* attribute's collation */
 	Oid			attcollation;
 
@@ -180,7 +183,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
  * ----------------
  */
 
-#define Natts_pg_attribute				21
+#define Natts_pg_attribute				22
 #define Anum_pg_attribute_attrelid		1
 #define Anum_pg_attribute_attname		2
 #define Anum_pg_attribute_atttypid		3
@@ -198,10 +201,11 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 #define Anum_pg_attribute_attisdropped	15
 #define Anum_pg_attribute_attislocal	16
 #define Anum_pg_attribute_attinhcount	17
-#define Anum_pg_attribute_attcollation	18
-#define Anum_pg_attribute_attacl		19
-#define Anum_pg_attribute_attoptions	20
-#define Anum_pg_attribute_attfdwoptions 21
+#define Anum_pg_attribute_projection	18
+#define Anum_pg_attribute_attcollation	19
+#define Anum_pg_attribute_attacl		20
+#define Anum_pg_attribute_attoptions	21
+#define Anum_pg_attribute_attfdwoptions 22
 
 
 /* ----------------

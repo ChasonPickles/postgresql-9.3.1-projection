@@ -446,6 +446,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	AttrNumber	attnum;
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	Oid			ofTypeId;
+    int i; // CS448
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time, as
@@ -614,6 +615,35 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 			descriptor->attrs[attnum - 1]->atthasdef = true;
 		}
 	}
+
+   /* CS448 */
+   for(i = 0; i < descriptor->natts; i++ ){
+        descriptor->attrs[i]->hasProjection = false;
+   }
+
+    if(stmt->projconstraints != NULL){
+        Constraint * con;
+        Value * value;
+        ListCell * lc;
+        ListCell * lc2;
+        char *name;
+        foreach(lc, stmt->projconstraints){
+           con =  lfirst(lc);
+
+           foreach(lc2, con->keys){
+               value = lfirst(lc2);
+
+               for(i = 0; i < descriptor->natts;i++ ){
+                    name = descriptor->attrs[i]->attname.data;
+                    if(strcmp(name, strVal(value)) == 0){
+                        descriptor->attrs[i]->hasProjection = true;
+                    } 
+               }
+                
+           }
+        }
+    }
+    /* CS448 END*/
 
 	/*
 	 * Create the relation.  Inherited defaults and constraints are passed in

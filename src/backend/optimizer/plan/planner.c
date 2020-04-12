@@ -39,6 +39,7 @@
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/rel.h"
+#include "utils/lsyscache.h"
 
 
 /* GUC parameter */
@@ -150,6 +151,14 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	ListCell   *lp,
 			   *lr;
 
+    TargetEntry* te; // CS448
+    Oid relOid;     // CS448
+    Oid projectionTableOid; // CS448
+    Relation rel;   // CS448
+    Relation projectionRel; // CS448
+    Oid namespaceId; // CS448
+    ListCell * l;       //CS448
+
 	/* Cursor options may come from caller or from DECLARE CURSOR stmt */
 	if (parse->utilityStmt &&
 		IsA(parse->utilityStmt, DeclareCursorStmt))
@@ -253,6 +262,39 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->relationOids = glob->relationOids;
 	result->invalItems = glob->invalItems;
 	result->nParamExec = glob->nParamExec;
+
+
+    // CS448
+    if(result->planTree->type == T_SeqScan){
+        if(result->planTree->targetlist->length == 1){
+
+            foreach(l, top_plan->targetlist){
+                te =  lfirst(l);
+                relOid = te->resorigtbl;
+
+
+                rel = relation_open(relOid, AccessShareLock);
+
+                if(rel->rd_rel->hasProjection){ 
+                    // rel->rd_rel->relnamespace
+                    namespaceId = RelationGetNamespace(rel);
+                    projectionTableOid = get_relname_relid(te->resname, namespaceId);
+                    if (projectionTableOid == InvalidOid){
+                        elog(WARNING, "projection not found: %s", te->resname);
+                    }else{
+                        projectionRel = relation_open(projectionTableOid, AccessShareLock);
+                        elog(WARNING, "projection sucessfully found: %s", te->resname);
+                        relation_close(projectionRel, AccessShareLock);
+                    }
+
+                }
+                
+                relation_close(rel, AccessShareLock);
+
+            }
+        }
+    
+    }
 
 	return result;
 }

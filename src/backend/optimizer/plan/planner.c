@@ -40,6 +40,9 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/rel.h"
 #include "utils/lsyscache.h"
+#include "nodes/makefuncs.h"
+#include "nodes/parsenodes.h"
+#include "parser/parse_relation.h"
 
 
 /* GUC parameter */
@@ -114,6 +117,7 @@ static void get_column_info_for_window(PlannerInfo *root, WindowClause *wc,
 						   AttrNumber **ordColIdx,
 						   Oid **ordOperators);
 
+RangeTblEntry * makeRangeTableEntry(Relation rel, Alias * alias);
 
 /*****************************************************************************
  *
@@ -161,6 +165,12 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
     TupleDesc descriptor; // CS448
     AttrNumber attnum; // CS448
     Form_pg_attribute pg_attr; //CS448
+    Form_pg_attribute pg_attr2; //CS448
+    RangeVar * rangeVar; // CS448
+    Alias * alias;
+    RangeTblEntry * rte;
+
+
 
 	/* Cursor options may come from caller or from DECLARE CURSOR stmt */
 	if (parse->utilityStmt &&
@@ -271,6 +281,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
     if(result->planTree->type == T_SeqScan && result->planTree->targetlist->length == 1){
 
         foreach(l, result->planTree->targetlist){
+            Var * var;
             te =  lfirst(l);
             relOid = te->resorigtbl;
 
@@ -282,12 +293,29 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
             if(pg_attr->hasProjection){
 
                 namespaceId = RelationGetNamespace(rel);
+
                 projectionTableOid = get_relname_relid(te->resname, namespaceId);
                 if (projectionTableOid == InvalidOid){
-                    elog(WARNING, "projection not found for column: %s", te->resname);
+                    elog(DEBUG1, "projection not found for column: %s", te->resname);
                 }else{
                     projectionRel = relation_open(projectionTableOid, AccessShareLock);
-                    elog(WARNING, "projection found sucessfully for column: %s", te->resname);
+
+                    pg_attr2 = projectionRel->rd_att->attrs[0];
+
+                    var = makeVar(1, pg_attr2->attnum, pg_attr2->atttypid, pg_attr2->atttypmod, pg_attr2->attcollation, 0);                   
+                    te = makeTargetEntry((Expr*) var, pg_attr2->attnum, pg_attr2->attname.data, false);
+                    top_plan->targetlist = list_make1(te);
+
+                    rangeVar = makeRangeVar(get_namespace_name(namespaceId), projectionRel->rd_rel->relname.data, -1);
+
+                    alias = makeAlias(projectionRel->rd_rel->relname.data, list_make1(projectionRel->rd_att->attrs[0]->attname.data)); 
+
+                    rte = makeRangeTableEntry(projectionRel, alias);
+                    result->rtable = list_make1(rte);
+                    result->relationOids = list_make1_oid(projectionTableOid);
+
+
+                    elog(DEBUG1, "projection found sucessfully for column: %s", te->resname);
                     relation_close(projectionRel, AccessShareLock);
                 
                 }
@@ -3604,4 +3632,23 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 									  NULL, 1.0);
 
 	return (seqScanAndSortPath.total_cost < indexScanPath->path.total_cost);
+}
+
+
+RangeTblEntry * 
+makeRangeTableEntry(Relation rel, Alias * alias){
+   RangeTblEntry *rte = makeNode(RangeTblEntry); 
+   rte->rtekind = RTE_RELATION;
+   rte->relid = rel->rd_id;
+   rte->relkind = rel->rd_rel->relkind;
+   rte->alias = alias;
+   rte->eref = alias;
+   rte->lateral = false;
+   rte->inh = false;
+   rte->inFromCl = true;
+   rte->requiredPerms = ACL_SELECT;
+   rte->checkAsUser = 0;
+   rte->selectedCols = bms_make_singleton(rel->rd_att->attrs[0]->attnum);
+   rte->modifiedCols = NULL;
+   return rte;
 }

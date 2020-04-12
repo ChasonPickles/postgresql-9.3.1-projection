@@ -158,6 +158,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
     Relation projectionRel; // CS448
     Oid namespaceId; // CS448
     ListCell * l;       //CS448
+    TupleDesc descriptor; // CS448
+    AttrNumber attnum; // CS448
+    Form_pg_attribute pg_attr; //CS448
 
 	/* Cursor options may come from caller or from DECLARE CURSOR stmt */
 	if (parse->utilityStmt &&
@@ -265,33 +268,33 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
 
     // CS448
-    if(result->planTree->type == T_SeqScan){
-        if(result->planTree->targetlist->length == 1){
+    if(result->planTree->type == T_SeqScan && result->planTree->targetlist->length == 1){
 
-            foreach(l, top_plan->targetlist){
-                te =  lfirst(l);
-                relOid = te->resorigtbl;
+        foreach(l, result->planTree->targetlist){
+            te =  lfirst(l);
+            relOid = te->resorigtbl;
 
+            attnum = get_attnum(relOid, te->resname);
 
-                rel = relation_open(relOid, AccessShareLock);
+            rel = relation_open(relOid, AccessShareLock);
+            pg_attr = rel->rd_att->attrs[attnum-1];
 
-                if(rel->rd_rel->hasProjection){ 
-                    // rel->rd_rel->relnamespace
-                    namespaceId = RelationGetNamespace(rel);
-                    projectionTableOid = get_relname_relid(te->resname, namespaceId);
-                    if (projectionTableOid == InvalidOid){
-                        elog(WARNING, "projection not found: %s", te->resname);
-                    }else{
-                        projectionRel = relation_open(projectionTableOid, AccessShareLock);
-                        elog(WARNING, "projection sucessfully found: %s", te->resname);
-                        relation_close(projectionRel, AccessShareLock);
-                    }
+            if(pg_attr->hasProjection){
 
-                }
+                namespaceId = RelationGetNamespace(rel);
+                projectionTableOid = get_relname_relid(te->resname, namespaceId);
+                if (projectionTableOid == InvalidOid){
+                    elog(WARNING, "projection not found for column: %s", te->resname);
+                }else{
+                    projectionRel = relation_open(projectionTableOid, AccessShareLock);
+                    elog(WARNING, "projection found sucessfully for column: %s", te->resname);
+                    relation_close(projectionRel, AccessShareLock);
                 
-                relation_close(rel, AccessShareLock);
-
+                }
             }
+            
+            relation_close(rel, AccessShareLock);
+
         }
     
     }

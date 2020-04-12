@@ -278,7 +278,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
 
     // CS448
-    if(result->planTree->type == T_SeqScan && result->planTree->targetlist->length == 1){
+    if(nodeType(PlanTree) == T_SeqScan && result->planTree->targetlist->length == 1){
 
         foreach(l, result->planTree->targetlist){
             Var * var;

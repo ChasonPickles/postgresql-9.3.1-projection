@@ -662,7 +662,7 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 			hasnull = true;
 		else if (att[i]->attlen == -1 &&
 				 att[i]->attalign == 'd' &&
-				 att[i]->attndims == 0 &&
+				 att[i]->attndims <= 0 &&
 				 !VARATT_IS_EXTENDED(DatumGetPointer(values[i])))
 		{
 			values[i] = toast_flatten_tuple_attribute(values[i],
@@ -1416,7 +1416,7 @@ heap_form_minimal_tuple(TupleDesc tupleDescriptor,
 			hasnull = true;
 		else if (att[i]->attlen == -1 &&
 				 att[i]->attalign == 'd' &&
-				 att[i]->attndims == 0 &&
+				 att[i]->attndims <= 0 &&
 				 !VARATT_IS_EXTENDED(values[i]))
 		{
 			values[i] = toast_flatten_tuple_attribute(values[i],

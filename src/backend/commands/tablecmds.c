@@ -617,9 +617,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	}
 
    /* CS448 */
-   for(i = 0; i < descriptor->natts; i++ ){
-        descriptor->attrs[i]->hasprojection = false;
-   }
 
     if(stmt->projconstraints != NULL){
         Constraint * con;
@@ -633,10 +630,10 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
            foreach(lc2, con->keys){
                value = lfirst(lc2);
 
-               for(i = 0; i < descriptor->natts;i++ ){
+               for(i = 0; i < descriptor->natts; i++){
                     name = descriptor->attrs[i]->attname.data;
                     if(strcmp(name, strVal(value)) == 0){
-                        descriptor->attrs[i]->hasprojection = true;
+                        descriptor->attrs[0]->attndims = -1;
                     } 
                }
                 

@@ -344,8 +344,10 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->attlen != attr2->attlen)
 			return false;
-		if (attr1->attndims != attr2->attndims)
-			return false;
+		if (attr1->attndims <= 0 && attr2->attndims > 0)
+            return false;
+        if(attr1->attndims > 0 && attr2->attndims <= 0)  
+            return false;
 		if (attr1->atttypmod != attr2->atttypmod)
 			return false;
 		if (attr1->attbyval != attr2->attbyval)

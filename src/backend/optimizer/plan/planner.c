@@ -278,7 +278,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
 
     // CS448
-    if(nodeType(PlanTree) == T_SeqScan && result->planTree->targetlist->length == 1){
+    if(result->planTree->type == T_SeqScan && result->planTree->targetlist->length == 1){
 
         foreach(l, result->planTree->targetlist){
             Var * var;
@@ -290,7 +290,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
             rel = relation_open(relOid, AccessShareLock);
             pg_attr = rel->rd_att->attrs[attnum-1];
 
-            if(pg_attr->hasprojection){
+            if(pg_attr->attndims == -1){
 
                 namespaceId = RelationGetNamespace(rel);
 

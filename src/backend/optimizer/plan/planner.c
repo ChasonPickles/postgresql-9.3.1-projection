@@ -162,7 +162,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
     Relation projectionRel; // CS448
     Oid namespaceId; // CS448
     ListCell * l;       //CS448
-    TupleDesc descriptor; // CS448
+    //TupleDesc descriptor; // CS448
     AttrNumber attnum; // CS448
     Form_pg_attribute pg_attr; //CS448
     Form_pg_attribute pg_attr2; //CS448
@@ -278,7 +278,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
 
     // CS448
-    if(result->planTree->type == T_SeqScan && result->planTree->targetlist->length == 1){
+    if(nodeTag(result->planTree) == T_SeqScan && result->planTree->targetlist->length == 1){
 
         foreach(l, result->planTree->targetlist){
             Var * var;
@@ -296,26 +296,30 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
                 projectionTableOid = get_relname_relid(te->resname, namespaceId);
                 if (projectionTableOid == InvalidOid){
-                    elog(DEBUG1, "projection not found for column: %s", te->resname);
+                    elog(WARNING, "projection not found for column: %s", te->resname);
                 }else{
-                    projectionRel = relation_open(projectionTableOid, AccessShareLock);
+                    elog(DEBUG1, "projection found in namespace for column: %s", te->resname);
 
+                    projectionRel = relation_open(projectionTableOid, AccessShareLock);
                     pg_attr2 = projectionRel->rd_att->attrs[0];
 
-                    var = makeVar(1, pg_attr2->attnum, pg_attr2->atttypid, pg_attr2->atttypmod, pg_attr2->attcollation, 0);                   
-                    te = makeTargetEntry((Expr*) var, pg_attr2->attnum, pg_attr2->attname.data, false);
-                    top_plan->targetlist = list_make1(te);
+                    if (pg_attr2->atttypid == pg_attr->atttypid){
+                        var = makeVar(1, pg_attr2->attnum, pg_attr2->atttypid, pg_attr2->atttypmod, pg_attr2->attcollation, 0);                   
+                        te = makeTargetEntry((Expr*) var, pg_attr2->attnum, pg_attr->attname.data, false);
+                        top_plan->targetlist = list_make1(te);
 
-                    rangeVar = makeRangeVar(get_namespace_name(namespaceId), projectionRel->rd_rel->relname.data, -1);
+                        rangeVar = makeRangeVar(get_namespace_name(namespaceId), projectionRel->rd_rel->relname.data, -1);
 
-                    alias = makeAlias(projectionRel->rd_rel->relname.data, list_make1(projectionRel->rd_att->attrs[0]->attname.data)); 
+                        alias = makeAlias(projectionRel->rd_rel->relname.data, list_make1(projectionRel->rd_att->attrs[0]->attname.data)); 
 
-                    rte = makeRangeTableEntry(projectionRel, alias);
-                    result->rtable = list_make1(rte);
-                    result->relationOids = list_make1_oid(projectionTableOid);
+                        rte = makeRangeTableEntry(projectionRel, alias);
+                        result->rtable = list_make1(rte);
+                        result->relationOids = list_make1_oid(projectionTableOid);
 
+                    }else{
+                        elog(WARNING, "projection column and projection table do not share same type:  %s", te->resname);
+                    }
 
-                    elog(DEBUG1, "projection found sucessfully for column: %s", te->resname);
                     relation_close(projectionRel, AccessShareLock);
                 
                 }

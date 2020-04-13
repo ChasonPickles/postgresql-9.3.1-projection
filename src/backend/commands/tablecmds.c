@@ -633,7 +633,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
                for(i = 0; i < descriptor->natts; i++){
                     name = descriptor->attrs[i]->attname.data;
                     if(strcmp(name, strVal(value)) == 0){
-                        descriptor->attrs[0]->attndims = -1;
+                        descriptor->attrs[i]->attndims = -1;
                     } 
                }
                 
